@@ -9,15 +9,15 @@
 <body class="bg-gray-50 text-gray-800 h-screen flex flex-col font-sans">
 
     <!-- Navbar -->
-    <header class="bg-white shadow-md w-full flex-shrink-0 z-10">
-        <div class="container mx-auto px-6 py-4 flex items-center">
-            <svg class="w-8 h-8 mr-3 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-5.747-8.494l11.494 5.747M12 17.747l-5.747-2.873M12 17.747l5.747-2.873M12 6.253L6.253 9.127M12 6.253l5.747 2.874M3.753 12l5.747 2.874m11.494-5.747L12 9.127"></path></svg>
+    <header class="bg-white shadow-md w-full flex-shrink-0 z-10 sticky top-0">
+        <div class="container mx-auto px-6 py-3 flex items-center">
+            <img src="https://sdit.almumtazkalbar.sch.id/assets/images/Logoyayasan.png" alt="Logo SDIT Al Mumtaz" class="h-10 w-10 mr-4">
             <h1 class="text-xl font-bold text-gray-700">Cek Kelas SDIT Al Mumtaz Pontianak</h1>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main id="main-content" class="flex-grow container mx-auto px-6 py-8">
+    <main id="main-content" class="flex-grow container mx-auto px-6 py-8 overflow-y-auto">
         <div class="max-w-md mx-auto">
             <div class="bg-white p-8 rounded-lg shadow-lg">
                 <form id="cek-kelas-form">
@@ -41,7 +41,7 @@
                     </div>
                 </form>
             </div>
-            <div id="result-container" class="mt-6"></div>
+            <div id="result-container" class="mt-6 pb-8"></div> <!-- Added padding-bottom -->
         </div>
     </main>
 
@@ -50,7 +50,7 @@
         <div class="container mx-auto px-6 py-3 text-sm text-gray-600 flex justify-between items-center">
             <div id="last-update">Memuat waktu...</div>
             <div>
-                Versi 2.0.0
+                Versi 2.1.0
             </div>
             <div>
                 Status: <span class="text-green-500 font-semibold">Online</span>
