@@ -11,17 +11,37 @@
     <!-- Navbar -->
     <header class="bg-white shadow-md w-full flex-shrink-0 z-10">
         <div class="container mx-auto px-6 py-4 flex items-center">
-            <!-- Placeholder Logo -->
             <svg class="w-8 h-8 mr-3 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-5.747-8.494l11.494 5.747M12 17.747l-5.747-2.873M12 17.747l5.747-2.873M12 6.253L6.253 9.127M12 6.253l5.747 2.874M3.753 12l5.747 2.874m11.494-5.747L12 9.127"></path></svg>
             <h1 class="text-xl font-bold text-gray-700">Cek Kelas SDIT Al Mumtaz Pontianak</h1>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-6 py-8">
-        <div class="text-center">
-            <h2 class="text-3xl font-bold mb-4">Selamat Datang</h2>
-            <p class="text-gray-600">Konten utama aplikasi akan ditampilkan di sini. Anda bisa menambahkan form pencarian atau daftar kelas.</p>
+    <main id="main-content" class="flex-grow container mx-auto px-6 py-8">
+        <div class="max-w-md mx-auto">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <form id="cek-kelas-form">
+                    <h2 class="text-2xl font-bold text-center mb-6">Cek Kenaikan Kelas</h2>
+                    <div class="mb-4">
+                        <label for="nis-input" class="block text-gray-700 text-sm font-bold mb-2">Masukkan NIS</label>
+                        <input type="text" id="nis-input" inputmode="numeric" pattern="[0-9]*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: 191571" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="va-input" class="block text-gray-700 text-sm font-bold mb-2">Masukkan VA</label>
+                        <input type="text" id="va-input" inputmode="numeric" pattern="[0-9]*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: 191571" required>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <button id="submit-button" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center" type="submit">
+                            <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Cek Kelas
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div id="result-container" class="mt-6"></div>
         </div>
     </main>
 
@@ -30,7 +50,7 @@
         <div class="container mx-auto px-6 py-3 text-sm text-gray-600 flex justify-between items-center">
             <div id="last-update">Memuat waktu...</div>
             <div>
-                Versi 1.0.0
+                Versi 2.0.0
             </div>
             <div>
                 Status: <span class="text-green-500 font-semibold">Online</span>
@@ -40,25 +60,138 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
+            // Footer last update timestamp
             const lastUpdateElement = document.getElementById('last-update');
             if (lastUpdateElement) {
                 try {
-                    const now = new Date();
-                    const options = {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false
-                    };
-                    lastUpdateElement.textContent = 'Last Update: ' + now.toLocaleDateString('id-ID', options);
+                    // Using the timestamp from the JSON file if available, otherwise current time.
+                    fetch('./data/siswa.json')
+                        .then(response => response.json())
+                        .then(data => {
+                            const jsonDate = new Date(data.last_updated);
+                            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                            lastUpdateElement.textContent = 'Data Terakhir Diperbarui: ' + jsonDate.toLocaleDateString('id-ID', options) + ' WIB';
+                        })
+                        .catch(() => {
+                             lastUpdateElement.textContent = 'Gagal memuat waktu update data';
+                        });
                 } catch (e) {
-                    lastUpdateElement.textContent = 'Last Update: Gagal memuat waktu';
-                    console.error('Error setting date:', e);
+                    lastUpdateElement.textContent = 'Gagal memuat waktu';
                 }
             }
+
+            // Form submission logic
+            const form = document.getElementById('cek-kelas-form');
+            const nisInput = document.getElementById('nis-input');
+            const vaInput = document.getElementById('va-input');
+            const resultContainer = document.getElementById('result-container');
+            const submitButton = document.getElementById('submit-button');
+            const spinner = document.getElementById('loading-spinner');
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const nis = nisInput.value.trim();
+                const va = vaInput.value.trim();
+
+                if (!nis || !va) {
+                    displayError('NIS dan VA tidak boleh kosong.');
+                    return;
+                }
+
+                spinner.classList.remove('hidden');
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                resultContainer.innerHTML = '';
+
+                try {
+                    const response = await fetch('./data/siswa.json');
+                    if (!response.ok) {
+                        throw new Error('Gagal mengambil data siswa. Silakan coba lagi nanti.');
+                    }
+                    const jsonData = await response.json();
+                    const studentData = jsonData.data;
+
+                    // Simulate network delay for better UX
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const foundStudent = studentData.find(student => student.NIS === nis && student.VA === va);
+
+                    if (foundStudent) {
+                        displayStudentData(foundStudent);
+                    } else {
+                        displayError('Data tidak ditemukan. Periksa kembali NIS dan VA yang Anda masukkan.');
+                    }
+
+                } catch (error) {
+                    displayError(error.message);
+                } finally {
+                    spinner.classList.add('hidden');
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+
+            function displayStudentData(student) {
+                const duStatusClass = student.DU === 'Lunas' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                const duStatusText = student.DU === 'Lunas' ? 'LUNAS' : 'BELUM LUNAS';
+
+                resultContainer.innerHTML = `
+                    <div class="bg-white p-8 rounded-lg shadow-lg animate-fade-in">
+                        <h3 class="text-2xl font-bold text-center text-teal-600 mb-4">Data Ditemukan</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="font-bold text-gray-600">Nama Lengkap</span>
+                                <span class="text-gray-800 text-right">${student['Nama Lengkap']}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="font-bold text-gray-600">NIS</span>
+                                <span class="text-gray-800">${student.NIS}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="font-bold text-gray-600">Status DU</span>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${duStatusClass}">${duStatusText}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="font-bold text-gray-600">Naik ke Kelas</span>
+                                <span class="font-extrabold text-xl text-teal-600">${student['Naik Kelas']}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="font-bold text-gray-600">Wali Kelas</span>
+                                <span class="text-gray-800 text-right">${student['Wali Kelas']}</span>
+                            </div>
+                            <div class="pt-4 text-center">
+                                <a href="${student['WA Wali Kelas']}" target="_blank" class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                                    Hubungi Wali Kelas via WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function displayError(message) {
+                resultContainer.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative shadow-lg animate-fade-in" role="alert">
+                        <strong class="font-bold">Gagal!</strong>
+                        <span class="block sm:inline">${message}</span>
+                    </div>
+                `;
+            }
+
+            // Add a simple fade-in animation for results
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in {
+                    animation: fade-in 0.5s ease-out forwards;
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
 
